@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+
+from clitodb.main import CLItoDB
+
+if __name__ == '__main__':
+    CLItoDB().cmdloop()
