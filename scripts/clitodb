@@ -3,4 +3,7 @@
 from clitodb.main import CLItoDB
 
 if __name__ == '__main__':
-    CLItoDB().cmdloop()
+    try:
+        CLItoDB().cmdloop()
+    except (KeyboardInterrupt,EOFError):
+        print('')

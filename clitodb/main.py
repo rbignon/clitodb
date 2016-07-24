@@ -1,9 +1,12 @@
+from __future__ import print_function
+
 import builtins
 import argparse
 import sys
 from prettytable import PrettyTable
 
 from sqlalchemy.engine.url import URL
+from sqlalchemy.exc import DatabaseError, NoSuchModuleError, ArgumentError
 
 from xonsh.shell import Shell
 
@@ -70,7 +73,14 @@ class CLItoDB(Shell):
             print(version)
             parser.exit()
 
-        self.db = Database(self.build_url(args))
+        try:
+            self.db = Database(self.build_url(args))
+        except DatabaseError as e:
+            print('Unable to connect to database:', e.orig.args[-1], file=sys.stderr)
+            sys.exit(1)
+        except (NoSuchModuleError,ArgumentError) as e:
+            print('Unable to load driver %s: %s' % (args.driver, e), file=sys.stderr)
+            sys.exit(1)
 
         builtins.__xonsh_shell__ = self
         builtins.__xonsh_subproc_uncaptured__ = self.sql_cmd
@@ -88,9 +98,13 @@ class CLItoDB(Shell):
         session = self.db.Session()
         for cmd in cmds:
             table = PrettyTable()
-            for line in session.execute(' '.join(cmd)):
-                table.add_row(line)
-            print(table.get_string())
+            try:
+                for line in session.execute(' '.join(cmd)):
+                    table.add_row(line)
+            except DatabaseError as e:
+                print(e)
+            else:
+                print(table.get_string())
 
         self.db.Session.remove()
 
