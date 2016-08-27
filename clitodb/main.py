@@ -19,6 +19,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import DatabaseError, NoSuchModuleError, ArgumentError
 
 from xonsh.shell import Shell
+from xonsh.aliases import xonsh_exit
 
 from clitodb import __version__
 from .database import Database
@@ -98,6 +99,12 @@ class CLItoDB(Shell):
         builtins.__xonsh_subproc_captured_inject__ = self.sql_cmd
         builtins.__xonsh_subproc_captured_object__ = self.sql_cmd
         builtins.__xonsh_subproc_captured_hiddenobject__ = self.sql_cmd
+        builtins.__xonsh_pathsearch__ = self.pathsearch
+        builtins.__xonsh_globsearch__ = self.globsearch
+        builtins.__xonsh_regexsearch__ = self.regexsearch
+        builtins.__xonsh_glob__ = self.globpath
+        builtins.__xonsh_expand_path__ = self.expand_path
+
         builtins.__xonsh_env__['FORMATTER_DICT']['database'] = args.database
         builtins.__xonsh_env__['FORMATTER_DICT']['user'] = args.user
         builtins.__xonsh_env__['FORMATTER_DICT']['hostname'] = args.host_name
@@ -106,17 +113,21 @@ class CLItoDB(Shell):
 
     def sql_cmd(self, *cmds):
         session = self.db.Session()
-        for cmd in cmds:
-            table = PrettyTable()
-            try:
-                for line in session.execute(' '.join(cmd)):
-                    table.add_row(line)
-            except DatabaseError as e:
-                print(e)
-            else:
-                print(table.get_string())
-
-        self.db.Session.remove()
+        try:
+            for cmd in cmds:
+                if cmd == ['EOF']:
+                    xonsh_exit([])
+                    return
+                table = PrettyTable()
+                try:
+                    for line in session.execute(' '.join(cmd)):
+                        table.add_row(line)
+                except DatabaseError as e:
+                    print(e)
+                else:
+                    print(table.get_string())
+        finally:
+            self.db.Session.remove()
 
     def build_url(self, args):
         url = URL(args.driver,
@@ -128,3 +139,18 @@ class CLItoDB(Shell):
                   query={"charset": "utf8"})
 
         return url
+
+    def pathsearch(self, *args, **kwargs):
+        print('pathsearch', args, kwargs)
+
+    def globsearch(self, *args, **kwargs):
+        print('globsearch', args, kwargs)
+
+    def regexsearch(self, *args, **kwargs):
+        print('regexsearch', args, kwargs)
+
+    def globpath(self, s, ignore_case=False, return_empty=False, sort_result=None):
+        return [s]
+
+    def expand_path(self, s):
+        return s
