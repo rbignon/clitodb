@@ -1,0 +1,38 @@
+Dependencies
+------------
+
+* python3-sqlalchemy
+* python3-xonsh
+
+How to launch it
+----------------
+
+To connect to a MySQL database (default):
+
+$ clitodb -uroot -proot database_name
+
+Or to another kind of database:
+
+$ clitodb --driver postgresql -uuser -ppass db_name
+
+SQL commands
+------------
+
+Like in the mysql cli, you can use SQL commands:
+
+root@localhost:bi> select * from bi_bank limit 1;
++---------+---------------+--------------+
+|   id    |    name       |   id_weboob  |
++---------+---------------+--------------+
+|    1    | Crédit Mutuel | creditmutuel |
++---------+---------------+--------------+
+
+SQLalchemy
+----------
+
+At connection to database, sqlalchemy is used to auto-discover the structure
+of the database, and to reflect it as models. A 'Session' object is also
+created and you can use it to query the database:
+
+root@localhost:bi> Session().query(bi_bank).first().name
+'Crédit Mutuel'
